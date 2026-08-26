@@ -1,0 +1,19 @@
+services:
+  # Service Frontend (Vite / React)
+  echo-client:
+    build:
+      # Contexte d'exécution du build (le dossier courant) et fichier Dockerfile utilisé
+      context: .
+      dockerfile: Dockerfile
+    container_name: echo-client
+    ports:
+      # Expose le port de dev Vite (5173) de la machine hôte vers le conteneur
+      - "5173:5173"
+    volumes:
+      # Mount du code source local dans /app pour activer le Hot Module Replacement (HMR)
+      - .:/app
+      # Isole le node_modules du conteneur pour éviter les conflits avec la machine hôte
+      - /app/node_modules
+    environment:
+      # Variable d'environnement lue par Vite au build/serve pour pointer vers l'API backend
+      - VITE_API_URL=http://localhost:4000
