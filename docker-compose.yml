@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   # Service Frontend (Vite / React)
   echo-client:
@@ -14,6 +16,10 @@ services:
       - .:/app
       # Isole le node_modules du conteneur pour éviter les conflits avec la machine hôte
       - /app/node_modules
+    env_file:
+      # Charge automatiquement le fichier .env situé à la racine du projet front
+      - .env
     environment:
       # Variable d'environnement lue par Vite au build/serve pour pointer vers l'API backend
-      - VITE_API_URL=http://localhost:4000
+      - VITE_API_URL=${VITE_API_URL}
+    restart: unless-stopped
