@@ -1,4 +1,3 @@
-import { useAuthStore } from "../../stores/auth.stores"; // Ajuste selon le chemin réel de ton store
 import "./DashboardPage.css";
 
 export function DashboardPage() {

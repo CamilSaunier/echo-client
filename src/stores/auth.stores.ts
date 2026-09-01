@@ -1,46 +1,94 @@
-// Importation de la fonction 'create' de Zustand pour fabriquer le store global
+// src/stores/auth.stores.ts
 import { create } from "zustand";
+import { authService } from "../services/auth.service";
+import type { LoginCredentials, RegisterCredentials } from "../types/auth.types";
+import type { User } from "../types/user.types";
 
-// Définition du contrat (interface) : à quoi ressemble l'état et les actions de l'authentification ?
+/**
+ * Interface définissant la structure de l'état global d'authentification (State & Actions).
+ */
 interface AuthState {
-  // Le jeton JWT de sécurité (soit une string, soit null s'il n'est pas connecté)
-  token: string | null;
+  // --- Les Données (State) ---
+  user: User | null; // Informations sur l'utilisateur connecté (ou null si déconnecté)
+  accessToken: string | null; // Jeton d'accès JWT stocké en mémoire vive (RAM)
+  isAuthenticated: boolean; // Booléen rapide pour savoir si l'utilisateur est connecté
+  isLoading: boolean; // Permet de gérer les états de chargement (loaders sur les boutons)
 
-  // Un booléen pratique pour savoir directement si l'utilisateur est authentifié (vrai si le token existe)
-  isAuthenticated: boolean;
-
-  // Action pour enregistrer le token lors de la connexion
-  login: (token: string) => void;
-
-  // Action pour supprimer le token et déconnecter l'utilisateur
-  logout: () => void;
+  // --- Les Actions (Methods) ---
+  login: (credentials: LoginCredentials) => Promise<void>;
+  register: (data: RegisterCredentials) => Promise<void>;
+  logout: () => Promise<void>;
+  setAccessToken: (token: string | null) => void;
+  setUser: (user: User | null) => void;
 }
 
-// Création et exportation du store Zustand
+/**
+ * Création du store Zustand pour l'authentification.
+ * Accessible globalement dans toute l'application React.
+ */
 export const useAuthStore = create<AuthState>((set) => ({
-  // --- 1. L'état initial (au démarrage ou au rechargement de l'application) ---
+  // --- État initial ---
+  user: null,
+  accessToken: null,
+  isAuthenticated: false,
+  isLoading: false,
 
-  // On va chercher directement dans le stockage du navigateur si un token existe déjà
-  token: localStorage.getItem("token") || null,
+  // --- Actions de mise à jour simple de l'état ---
+  setAccessToken: (token) =>
+    set({
+      accessToken: token,
+      isAuthenticated: !!token, // Met à jour true si le token existe, false sinon
+    }),
 
-  // 'isAuthenticated' passe à true si un token est présent dans le localStorage (grâce à la double négation !!)
-  isAuthenticated: !!localStorage.getItem("token"),
+  setUser: (user) => set({ user }),
 
-  // --- 2. Les actions pour modifier cet état ---
+  // --- Action de Connexion (Login) ---
+  login: async (credentials) => {
+    set({ isLoading: true }); // Active le loader
+    try {
+      // 1. Appel au service d'authentification distant
+      const response = await authService.login(credentials);
 
-  // Action de connexion
-  login: (token: string) => {
-    // 1. On sauvegarde le token dans le navigateur pour qu'il persiste au refresh
-    localStorage.setItem("token", token);
-    // 2. On met à jour le store : on stocke le token et on passe isAuthenticated à true
-    set({ token, isAuthenticated: true });
+      // 2. Si succès, on met à jour le store avec les données reçues
+      set({
+        accessToken: response.accessToken,
+        user: response.user,
+        isAuthenticated: true,
+      });
+    } catch (error) {
+      // L'erreur est relancée pour pouvoir l'afficher dans le composant UI (ex: message d'erreur)
+      throw error;
+    } finally {
+      set({ isLoading: false }); // Désactive le loader dans tous les cas
+    }
   },
 
-  // Action de déconnexion
-  logout: () => {
-    // 1. On supprime le token du stockage du navigateur
-    localStorage.removeItem("token");
-    // 2. On remet tout à zéro dans le store
-    set({ token: null, isAuthenticated: false });
+  // --- Action d'Inscription (Register) ---
+  register: async (data) => {
+    set({ isLoading: true });
+    try {
+      // Appel au service d'inscription
+      await authService.register(data);
+      // Note : On ne connecte pas forcément l'utilisateur direct, on peut le rediriger vers le login
+    } catch (error) {
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  // --- Action de Déconnexion (Logout) ---
+  logout: async () => {
+    try {
+      // Appelle le service pour nettoyer le cookie HttpOnly côté back
+      await authService.logout();
+    } finally {
+      // Qu'il y ait une erreur réseau ou non, on nettoie l'état local du client
+      set({
+        accessToken: null,
+        user: null,
+        isAuthenticated: false,
+      });
+    }
   },
 }));

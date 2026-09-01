@@ -1,5 +1,8 @@
+// src/components/LoginForm/LoginForm.tsx
 import { useState } from "react";
 import type { SyntheticEvent } from "react";
+import { toast } from "sonner"; // Import de la fonction toast
+import { useAuthStore } from "../../stores/auth.stores";
 import "./LoginForm.css";
 
 export function LoginForm() {
@@ -7,9 +10,21 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
 
-  const handleSubmit = (e: SyntheticEvent) => {
+  // Récupération de l'action login et du loader depuis le store
+  const { login, isLoading } = useAuthStore();
+
+  const handleSubmit = async (e: SyntheticEvent) => {
     e.preventDefault();
-    console.log("Connexion :", { email, password, rememberMe });
+
+    try {
+      // Appel de l'action login du store
+      await login({ email, password });
+      toast.success("Connexion réussie ! Bienvenue sur Echo.");
+      console.log("Connexion réussie avec rememberMe :", rememberMe);
+    } catch (error: any) {
+      // Toast d'erreur global et élégant en cas d'échec
+      toast.error(error.message || "Identifiants invalides ou erreur serveur.");
+    }
   };
 
   return (
@@ -34,8 +49,8 @@ export function LoginForm() {
         </a>
       </div>
 
-      <button type="submit" className="btn-submit">
-        Se connecter
+      <button type="submit" className="btn-submit" disabled={isLoading}>
+        {isLoading ? "Connexion en cours..." : "Se connecter"}
       </button>
     </form>
   );
