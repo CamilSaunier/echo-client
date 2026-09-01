@@ -1,34 +1,46 @@
-// Importation de la fonction 'create' de Zustand pour fabriquer le store
+// Importation de la fonction 'create' de Zustand pour fabriquer le store global
 import { create } from "zustand";
-// Importation du type TypeScript 'User' pour typer proprement notre utilisateur
-import type { User } from "../types";
 
-// Définition du contrat (interface) : à quoi ressemble l'état global de l'authentification ?
+// Définition du contrat (interface) : à quoi ressemble l'état et les actions de l'authentification ?
 interface AuthState {
-  // L'utilisateur connecté (soit un objet User, soit null s'il n'est pas connecté)
-  user: User | null;
-
-  // Le jeton JWT de sécurité (soit une string, soit null)
+  // Le jeton JWT de sécurité (soit une string, soit null s'il n'est pas connecté)
   token: string | null;
 
-  // Action pour enregistrer l'utilisateur et son token lors de la connexion
-  setAuth: (user: User, token: string) => void;
+  // Un booléen pratique pour savoir directement si l'utilisateur est authentifié (vrai si le token existe)
+  isAuthenticated: boolean;
 
-  // Action pour nettoyer l'état et déconnecter l'utilisateur
+  // Action pour enregistrer le token lors de la connexion
+  login: (token: string) => void;
+
+  // Action pour supprimer le token et déconnecter l'utilisateur
   logout: () => void;
 }
 
-// Création et exportation du store Zustand (qui est un hook React qu'on pourra appeler partout)
+// Création et exportation du store Zustand
 export const useAuthStore = create<AuthState>((set) => ({
-  // --- 1. L'état initial (au démarrage de l'application) ---
-  user: null,
-  token: null,
+  // --- 1. L'état initial (au démarrage ou au rechargement de l'application) ---
+
+  // On va chercher directement dans le stockage du navigateur si un token existe déjà
+  token: localStorage.getItem("token") || null,
+
+  // 'isAuthenticated' passe à true si un token est présent dans le localStorage (grâce à la double négation !!)
+  isAuthenticated: !!localStorage.getItem("token"),
 
   // --- 2. Les actions pour modifier cet état ---
 
-  // Met à jour le state avec le nouvel utilisateur et le nouveau token
-  setAuth: (user, token) => set({ user, token }),
+  // Action de connexion
+  login: (token: string) => {
+    // 1. On sauvegarde le token dans le navigateur pour qu'il persiste au refresh
+    localStorage.setItem("token", token);
+    // 2. On met à jour le store : on stocke le token et on passe isAuthenticated à true
+    set({ token, isAuthenticated: true });
+  },
 
-  // Réinitialise l'utilisateur et le token à null (déconnexion)
-  logout: () => set({ user: null, token: null }),
+  // Action de déconnexion
+  logout: () => {
+    // 1. On supprime le token du stockage du navigateur
+    localStorage.removeItem("token");
+    // 2. On remet tout à zéro dans le store
+    set({ token: null, isAuthenticated: false });
+  },
 }));
