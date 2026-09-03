@@ -70,3 +70,58 @@
 .btn-submit:active {
   transform: scale(0.985);
 }
+
+/* Alignement du champ et du bouton d'affichage du mot de passe */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.password-input-wrapper input {
+  width: 100%;
+  padding-right: 4.5rem; /* Évite que le texte chevauche le bouton */
+}
+
+.toggle-password-btn {
+  position: absolute;
+  right: 0.75rem;
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.toggle-password-btn:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.form-error {
+  background-color: #fde8e8;
+  color: #e53e3e;
+  border: 1px solid #f8b4b4;
+  padding: 0.75rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.input-error {
+  border-color: #e53e3e !important;
+}
+
+.field-error-text {
+  color: #e53e3e;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  display: block;
+}
