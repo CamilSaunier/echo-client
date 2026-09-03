@@ -6,13 +6,20 @@ import { useAuthStore } from "../stores/auth.stores";
 // Si VITE_API_URL vaut "http://localhost:8000/api", on retire "/api" pour obtenir "http://localhost:8000"
 const SOCKET_URL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:8000";
 
+/**
+ * Service responsible for managing the WebSocket client connection.
+ * Implements a Singleton pattern to ensure a single active connection across the application.
+ */
 class SocketService {
   // Propriété publique qui stocke l'instance de la socket (ou null si non connecté)
   public socket: Socket | null = null;
 
   /**
-   * Establish connexion with websocket Serv.
-   * Use Acces Token in the store for authenticated the user
+   * Establishes a connection with the WebSocket server.
+   * Uses the Access Token from the store to authenticate the user during the handshake.
+   *
+   * @function connect
+   * @returns {Socket} The active Socket.io instance
    */
   public connect(): Socket {
     // Si une connexion existe déjà et est active, on la retourne directement pour éviter les doublons
@@ -51,7 +58,11 @@ class SocketService {
   }
 
   /**
-   * Ferme proprement la connexion WebSocket (utile lors de la déconnexion de l'utilisateur).
+   * Cleanly closes the WebSocket connection.
+   * Useful when the user logs out or explicitly ends their session.
+   *
+   * @function disconnect
+   * @returns {void}
    */
   public disconnect(): void {
     if (this.socket) {
