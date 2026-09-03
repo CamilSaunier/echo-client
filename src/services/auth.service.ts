@@ -1,13 +1,10 @@
 // src/services/auth.service.ts
+import { api } from "./api.service";
 import type { LoginCredentials, RegisterCredentials, AuthResponse } from "../types/auth.types";
 import type { User } from "../types/user.types";
 
-// Récupération de l'URL de base de l'API depuis les variables d'environnement Vite,
-// avec un fallback de sécurité sur le port 8000 si la variable n'est pas définie.
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-
 /**
- * Service centralisant tous les appels HTTP vers l'API d'authentification du backend.
+ * Service centralisant tous les appels HTTP vers l'API d'authentification du backend via Axios.
  */
 export const authService = {
   /**
@@ -18,21 +15,11 @@ export const authService = {
    * @throws {Error} Throws an error if the registration request fails
    */
   async register(data: RegisterCredentials): Promise<User> {
-    const response = await fetch(`${API_URL}/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-
-    const json = await response.json();
-
-    // Si le serveur renvoie un code d'erreur HTTP (ex: 400, 500), on lève une exception
-    if (!response.ok) {
-      throw new Error(json.message || "Erreur lors de l'inscription");
-    }
+    // Axios effectue la requête POST et parse automatiquement le JSON dans response.data
+    const response = await api.post<{ success: boolean; message: string; data: User }>("/auth/register", data);
 
     // L'API encapsule sa réponse, on extrait et retourne uniquement la propriété `data` (l'utilisateur)
-    return json.data;
+    return response.data.data;
   },
 
   /**
@@ -43,23 +30,10 @@ export const authService = {
    * @throws {Error} Throws an error if credentials are invalid or request fails
    */
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const response = await fetch(`${API_URL}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      // `credentials: "include"` est crucial : il permet au navigateur d'accepter
-      // et de stocker automatiquement le cookie HttpOnly contenant le Refresh Token envoyé par le back.
-      credentials: "include",
-      body: JSON.stringify(credentials),
-    });
-
-    const json = await response.json();
-
-    if (!response.ok) {
-      throw new Error(json.message || "Identifiants invalides");
-    }
+    const response = await api.post<{ success: boolean; message: string; data: AuthResponse }>("/auth/login", credentials);
 
     // L'API renvoie { success, message, data: { accessToken, user } }, on retourne le bloc `data`
-    return json.data;
+    return response.data.data;
   },
 
   /**
@@ -69,23 +43,13 @@ export const authService = {
    * @returns {Promise<User>} The user's profile information
    * @throws {Error} Throws an error if token is invalid or profile cannot be fetched
    */
-  async getMe(accessToken: string): Promise<User> {
-    const response = await fetch(`${API_URL}/auth/me`, {
-      method: "GET",
-      headers: {
-        // Transmission sécurisée de l'Access Token dans l'en-tête de la requête
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    const json = await response.json();
-
-    if (!response.ok) {
-      throw new Error("Impossible de récupérer le profil");
-    }
+  async getMe(_accessToken: string): Promise<User> {
+    // Grâce à l'intercepteur Axios configuré dans api.ts, l'Access Token est injecté
+    // automatiquement dans le header Authorization. Pas besoin de le passer manuellement.
+    const response = await api.get<{ success: boolean; message: string; data: User }>("/auth/me");
 
     // Gère le cas où l'API renvoie directement l'objet ou l'encapsule dans `data`
-    return json.data || json;
+    return response.data.data || response.data;
   },
 
   /**
@@ -95,10 +59,8 @@ export const authService = {
    * @returns {Promise<void>}
    */
   async logout(): Promise<void> {
-    await fetch(`${API_URL}/auth/logout`, {
-      method: "POST",
-      // Nécessaire pour que le navigateur transmette et permette au back de supprimer le cookie HttpOnly
-      credentials: "include",
-    });
+    // Grâce à `withCredentials: true`, le navigateur transmet automatiquement le cookie HttpOnly
+    // pour qu'il soit supprimé côté serveur.
+    await api.post("/auth/logout");
   },
 };
