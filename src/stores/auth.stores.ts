@@ -1,6 +1,7 @@
 // src/stores/auth.stores.ts
 import { create } from "zustand";
 import { authService } from "../services/auth.service";
+import { socketService } from "../services/socket.service";
 import type { LoginCredentials, RegisterCredentials } from "../types/auth.types";
 import type { User } from "../types/user.types";
 
@@ -55,8 +56,11 @@ export const useAuthStore = create<AuthState>((set) => ({
         user: response.user,
         isAuthenticated: true,
       });
+
+      // 3. Connexion au serveur WebSocket avec le nouveau token disponible
+      socketService.connect();
     } catch (error) {
-      // L'erreur est relancée pour pouvoir l'afficher dans le composant UI (ex: message d'erreur)
+      // L'erreur est relancée pour pouvoir l'afficher dans le composant UI
       throw error;
     } finally {
       set({ isLoading: false }); // Désactive le loader dans tous les cas
@@ -69,7 +73,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       // Appel au service d'inscription
       await authService.register(data);
-      // Note : On ne connecte pas forcément l'utilisateur direct, on peut le rediriger vers le login
     } catch (error) {
       throw error;
     } finally {
@@ -83,7 +86,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       // Appelle le service pour nettoyer le cookie HttpOnly côté back
       await authService.logout();
     } finally {
-      // Qu'il y ait une erreur réseau ou non, on nettoie l'état local du client
+      // Qu'il y ait une erreur réseau ou non, on coupe la socket et on nettoie l'état local
+      socketService.disconnect();
       set({
         accessToken: null,
         user: null,
