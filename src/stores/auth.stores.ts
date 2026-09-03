@@ -6,87 +6,105 @@ import type { LoginCredentials, RegisterCredentials } from "../types/auth.types"
 import type { User } from "../types/user.types";
 
 /**
- * Interface définissant la structure de l'état global d'authentification (State & Actions).
+ * Interface representing the global authentication state and available actions.
  */
 interface AuthState {
-  // --- Les Données (State) ---
-  user: User | null; // Informations sur l'utilisateur connecté (ou null si déconnecté)
-  accessToken: string | null; // Jeton d'accès JWT stocké en mémoire vive (RAM)
-  isAuthenticated: boolean; // Booléen rapide pour savoir si l'utilisateur est connecté
-  isLoading: boolean; // Permet de gérer les états de chargement (loaders sur les boutons)
+  user: User | null;
+  accessToken: string | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  isInitializing: boolean; // Indique si la vérification initiale de session est en cours
 
-  // --- Les Actions (Methods) ---
+  /** Authenticates a user and connects WebSockets. */
   login: (credentials: LoginCredentials) => Promise<void>;
+  /** Registers a new user account. */
   register: (data: RegisterCredentials) => Promise<void>;
+  /** Logs out the user, revokes session and disconnects WebSockets. */
   logout: () => Promise<void>;
+  /** Restores user session silently using the HttpOnly refresh token cookie on app startup. */
+  checkAuth: () => Promise<void>;
+  /** Directly updates the Access Token in RAM state. */
   setAccessToken: (token: string | null) => void;
+  /** Directly updates the current authenticated user object. */
   setUser: (user: User | null) => void;
 }
 
 /**
- * Création du store Zustand pour l'authentification.
- * Accessible globalement dans toute l'application React.
+ * Zustand authentication store.
+ * Keeps tokens strictly in RAM to protect against XSS vulnerabilities.
  */
 export const useAuthStore = create<AuthState>((set) => ({
-  // --- État initial ---
   user: null,
   accessToken: null,
   isAuthenticated: false,
   isLoading: false,
+  isInitializing: true, // Démarre à true pour bloquer le rendu des routes protégées au boot
 
-  // --- Actions de mise à jour simple de l'état ---
   setAccessToken: (token) =>
     set({
       accessToken: token,
-      isAuthenticated: !!token, // Met à jour true si le token existe, false sinon
+      isAuthenticated: !!token,
     }),
 
   setUser: (user) => set({ user }),
 
-  // --- Action de Connexion (Login) ---
-  login: async (credentials) => {
-    set({ isLoading: true }); // Active le loader
+  checkAuth: async () => {
     try {
-      // 1. Appel au service d'authentification distant
-      const response = await authService.login(credentials);
+      // Tentative de récupération d'un nouvel Access Token via le cookie HttpOnly
+      const response = await authService.refreshToken();
 
-      // 2. Si succès, on met à jour le store avec les données reçues
       set({
         accessToken: response.accessToken,
         user: response.user,
         isAuthenticated: true,
       });
 
-      // 3. Connexion au serveur WebSocket avec le nouveau token disponible
+      // Connexion au serveur WebSocket une fois la session restaurée
       socketService.connect();
-    } catch (error) {
-      // L'erreur est relancée pour pouvoir l'afficher dans le composant UI
-      throw error;
+    } catch {
+      // Si le cookie est absent ou expiré, réinitialisation silencieuse du store
+      set({
+        accessToken: null,
+        user: null,
+        isAuthenticated: false,
+      });
     } finally {
-      set({ isLoading: false }); // Désactive le loader dans tous les cas
+      // Libération du verrou d'initialisation de l'application
+      set({ isInitializing: false });
     }
   },
 
-  // --- Action d'Inscription (Register) ---
-  register: async (data) => {
+  login: async (credentials) => {
     set({ isLoading: true });
     try {
-      // Appel au service d'inscription
-      await authService.register(data);
-    } catch (error) {
-      throw error;
+      const response = await authService.login(credentials);
+      set({
+        accessToken: response.accessToken,
+        user: response.user,
+        isAuthenticated: true,
+      });
+
+      // Connexion au serveur WebSocket dès que l'utilisateur se connecte
+      socketService.connect();
     } finally {
       set({ isLoading: false });
     }
   },
 
-  // --- Action de Déconnexion (Logout) ---
+  register: async (data) => {
+    set({ isLoading: true });
+    try {
+      await authService.register(data);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
   logout: async () => {
     try {
-      // Appelle le service pour nettoyer le cookie HttpOnly côté back
       await authService.logout();
     } finally {
-      // Qu'il y ait une erreur réseau ou non, on coupe la socket et on nettoie l'état local
+      // Coupure propre de la connexion WebSocket et vidage de la mémoire RAM
       socketService.disconnect();
       set({
         accessToken: null,

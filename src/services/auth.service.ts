@@ -37,6 +37,20 @@ export const authService = {
   },
 
   /**
+   * Refreshes the JWT access token using the HttpOnly refresh token cookie.
+   *
+   * @returns {Promise<AuthResponse>} An object containing the new Access Token and user information
+   * @throws {Error} Throws an error if the refresh token is missing or expired
+   */
+  async refreshToken(): Promise<AuthResponse> {
+    // Le cookie HttpOnly est transmis automatiquement par le navigateur grâce à `withCredentials: true`.
+    // On extrait le bloc `data` qui contient le nouvel accessToken et les données de l'utilisateur.
+    const response = await api.post<{ success: boolean; message: string; data: AuthResponse }>("/auth/refresh");
+
+    return response.data.data;
+  },
+
+  /**
    * Retrieves the profile of the currently authenticated user using their Access Token.
    *
    * @param {string} accessToken - The JWT access token stored in memory (Zustand store)
