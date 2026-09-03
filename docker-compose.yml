@@ -8,10 +8,21 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: echo-client
-    # Avant de lancer le serveur de dev, on réinstalle les dépendances.
-    # Ça garantit que le node_modules du volume nommé reste parfaitement synchro
-    # avec le package.json (évite d'avoir à rebuild à chaque ajout de paquet).
-    command: sh -c "pnpm install && pnpm dev -- --host"
+    # Au démarrage : install initial, puis lancement de Vite en arrière-plan (&),
+    # puis une boucle inotifywait qui surveille package.json et pnpm-lock.yaml.
+    # Dès que l'un des deux fichiers est modifié depuis l'hôte (ex: tu ajoutes une dépendance
+    # à la main, ou via un `pnpm add` lancé en local), le conteneur relance automatiquement
+    # `pnpm install` sans que tu aies besoin de faire un `exec` ou un restart manuel.
+    # Vite (déjà lancé) détecte ensuite les nouveaux modules via son HMR habituel.
+    command: >
+      sh -c "
+      pnpm install &&
+      pnpm dev -- --host &
+      while inotifywait -e close_write package.json pnpm-lock.yaml; do
+        echo '📦 Changement détecté sur package.json/pnpm-lock.yaml, réinstallation...' &&
+        pnpm install;
+      done
+      "
     ports:
       # Expose le port de dev Vite (5173) de la machine hôte vers le conteneur
       - "5173:5173"
