@@ -1,4 +1,5 @@
 import type { User } from "./user.types";
+import type { Message } from "./message.types";
 
 export interface ConversationParticipant {
   id: string;
@@ -14,4 +15,5 @@ export interface Conversation {
   isGroup: boolean;
   createdAt: string;
   participants: ConversationParticipant[];
+  messages?: Message[];
 }
