@@ -1,0 +1,26 @@
+/* src/layouts/DashboardLayout.css */
+.dashboard-app-layout {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--bg-primary);
+}
+
+.dashboard-app-content {
+  flex: 1;
+  height: 100vh;
+  /* Décale le contenu principal pour ne pas être masqué par la Sidebar (260px) */
+  margin-left: 260px;
+  overflow: hidden;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Adaptabilité responsive mobile */
+@media (max-width: 768px) {
+  .dashboard-app-content {
+    margin-left: 0;
+    /* Espace suffisant en haut sur mobile pour laisser passer le bouton burger */
+    padding-top: 60px;
+  }
+}
