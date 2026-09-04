@@ -1,7 +1,8 @@
-// src/components/Header/Header.tsx
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { LogOut } from "lucide-react";
 import { useAuthStore } from "../../stores/auth.stores";
+import { ThemeToggle } from "../ThemeToggle/ThemeToggle";
 import "./Header.css";
 
 /**
@@ -10,19 +11,6 @@ import "./Header.css";
 export const Header: React.FC = () => {
   const { isAuthenticated, logout } = useAuthStore();
   const navigate = useNavigate();
-
-  // État local pour gérer le thème (light / dark)
-  const [isDark, setIsDark] = useState<boolean>(() => {
-    return document.documentElement.classList.contains("dark") || window.matchMedia("(prefers-color-scheme: dark)").matches;
-  });
-
-  useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [isDark]);
 
   const handleLogout = async () => {
     await logout();
@@ -39,23 +27,12 @@ export const Header: React.FC = () => {
 
         {/* Actions de droite : Toggle de thème et Déconnexion conditionnelle */}
         <div className="header-actions">
-          {/* Toggle Switch inspiré d'AuthPage */}
-          <div className="header-theme-switcher">
-            <span className="theme-label">Clair</span>
-            <button
-              type="button"
-              className={`toggle-switch ${isDark ? "active" : ""}`}
-              onClick={() => setIsDark(!isDark)}
-              aria-label="Basculer le thème"
-            >
-              <span className="toggle-thumb" />
-            </button>
-            <span className="theme-label">Sombre</span>
-          </div>
+          <ThemeToggle />
 
           {isAuthenticated && (
-            <button onClick={handleLogout} className="header-logout-btn">
-              Déconnexion
+            <button onClick={handleLogout} className="header-logout-btn" aria-label="Se déconnecter">
+              <LogOut size={18} />
+              <span>Déconnexion</span>
             </button>
           )}
         </div>
