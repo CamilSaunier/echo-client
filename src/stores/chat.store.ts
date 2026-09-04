@@ -101,12 +101,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
   addMessage: (newMessage: Message) => {
     const { activeConversationId, messages, conversations } = get();
 
-    // Insertion du message dans le fil de discussion s'il s'agit de la conversation ouverte
     if (newMessage.conversationId === activeConversationId) {
-      set({ messages: [...messages, newMessage] });
+      // Évite d'ajouter deux fois un message avec le même ID
+      const exists = messages.some((m) => m.id === newMessage.id);
+      if (!exists) {
+        set({ messages: [...messages, newMessage] });
+      }
     }
 
-    // Mise à jour de l'aperçu du dernier message dans la liste des conversations (sidebar)
     const updatedConversations = conversations.map((conv) => {
       if (conv.id === newMessage.conversationId) {
         return {
