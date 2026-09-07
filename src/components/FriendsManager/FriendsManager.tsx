@@ -4,6 +4,7 @@ import { UserPlus, Check, X, UserX, Loader2, Search, MessageSquare } from "lucid
 import { toast } from "sonner";
 import { useFriendStore } from "../../stores/friend.store";
 import { useChatStore } from "../../stores/chat.store";
+import { useAuthStore } from "../../stores/auth.stores";
 import { userService } from "../../services/user.service";
 import type { User } from "../../types/user.types";
 import "./FriendsManager.css";
@@ -18,6 +19,7 @@ export const FriendsManager: React.FC = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [sendingId, setSendingId] = useState<string | null>(null);
 
+  const currentUser = useAuthStore((state) => state.user);
   const { friends, pendingRequests, isLoading, fetchAll, sendRequest, respondToRequest, removeFriend } = useFriendStore();
   const { startDirectConversation } = useChatStore();
 
@@ -113,6 +115,8 @@ export const FriendsManager: React.FC = () => {
     );
   }
 
+  console.log("Liste des amis dans le state :", friends);
+  console.log("Utilisateur connecté :", currentUser);
   return (
     <div className="friends-manager">
       {/* Recherche et ajout d'ami */}
@@ -185,25 +189,26 @@ export const FriendsManager: React.FC = () => {
         ) : (
           <ul className="friends-manager__list">
             {friends.map((item) => {
-              const displayUser = item.friend || item.user;
-              const displayId = displayUser?.id || item.friendId;
+              const friend = item as any; // Aligne le type TS sur l'objet User réellement renvoyé
+              const username = friend.username || friend.friend?.username || "Ami";
+              const friendId = friend.id;
 
               return (
-                <li key={item.id} className="friends-manager__item">
+                <li key={friendId} className="friends-manager__item">
                   <div className="friends-manager__user-info">
-                    <div className="friends-manager__avatar">{(displayUser?.username?.[0] || "U").toUpperCase()}</div>
-                    <span className="friends-manager__username">{displayUser?.username || displayId}</span>
+                    <div className="friends-manager__avatar">{(username[0] || "U").toUpperCase()}</div>
+                    <span className="friends-manager__username">{username}</span>
                   </div>
                   <div className="friends-manager__actions">
                     <button
-                      onClick={() => handleStartChat(displayId)}
+                      onClick={() => handleStartChat(friendId)}
                       className="friends-manager__btn friends-manager__btn--primary"
                       title="Démarrer une discussion"
                     >
                       <MessageSquare size={16} />
                     </button>
                     <button
-                      onClick={() => handleRemove(displayId)}
+                      onClick={() => handleRemove(friendId)}
                       className="friends-manager__btn friends-manager__btn--ghost"
                       title="Supprimer l'ami"
                     >
