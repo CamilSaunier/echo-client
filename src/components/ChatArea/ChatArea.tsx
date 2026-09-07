@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Send, Hash, MessageSquare } from "lucide-react";
+import { Send, Hash, MessageSquare, ArrowLeft } from "lucide-react";
 import { useChatStore } from "../../stores/chat.store";
 import { useAuthStore } from "../../stores/auth.stores";
 import "./ChatArea.css";
@@ -62,6 +62,9 @@ export const ChatArea: React.FC = () => {
     <div className="chat-area-container">
       {/* En-tête */}
       <div className="chat-header">
+        <button className="chat-back-btn" onClick={() => useChatStore.setState({ activeConversationId: null })} title="Retour aux amis">
+          <ArrowLeft size={18} />
+        </button>
         <Hash size={20} className="channel-icon" />
         <h2 className="channel-title">{chatTitle}</h2>
       </div>

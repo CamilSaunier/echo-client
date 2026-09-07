@@ -18,6 +18,7 @@ interface ChatState {
 
   fetchConversations: () => Promise<void>;
   selectConversation: (conversationId: string) => Promise<void>;
+  startDirectConversation: (targetUserId: string) => Promise<void>;
   sendMessage: (content: string) => Promise<void>;
   addMessage: (message: Message) => void;
   initSocketListeners: () => void;
@@ -69,6 +70,39 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   /**
+   * Starts or opens an existing direct conversation with a friend.
+   *
+   * @param targetUserId - The unique identifier of the target user/friend
+   */
+  startDirectConversation: async (targetUserId: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const conversation = await conversationService.getOrCreateDirectConversation(targetUserId);
+
+      const { conversations } = get();
+      const exists = conversations.some((c) => c.id === conversation.id);
+
+      if (!exists) {
+        set({ conversations: [conversation, ...conversations] });
+      }
+
+      // Rejoint la room Socket.io pour la réception temps réel
+      const socket = socketService.socket;
+      if (socket?.connected) {
+        socket.emit("conversation:join", { conversationId: conversation.id });
+      }
+
+      // Active la conversation et récupère son historique
+      await get().selectConversation(conversation.id);
+    } catch (err: any) {
+      set({
+        error: err.response?.data?.message || "Erreur lors de l'ouverture de la conversation.",
+        isLoading: false,
+      });
+    }
+  },
+
+  /**
    * Sends a message to the active conversation via WebSocket or falls back to REST API.
    *
    * @param content - The plain text message content
@@ -80,11 +114,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       const socket = socketService.socket;
 
-      // Si la socket est connectée, on privilégie l'émission en temps réel
       if (socket?.connected) {
         socket.emit("message:send", { content, conversationId: activeConversationId });
       } else {
-        // Fallback HTTP REST si la connexion WebSocket est coupée
         const newMessage = await messageService.sendMessage(content, activeConversationId);
         get().addMessage(newMessage);
       }
@@ -102,7 +134,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const { activeConversationId, messages, conversations } = get();
 
     if (newMessage.conversationId === activeConversationId) {
-      // Évite d'ajouter deux fois un message avec le même ID
       const exists = messages.some((m) => m.id === newMessage.id);
       if (!exists) {
         set({ messages: [...messages, newMessage] });
@@ -129,10 +160,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const socket = socketService.socket;
     if (!socket) return;
 
-    // Suppression de l'écouteur précédent pour éviter l'accumulation de doublons
     socket.off("message:received");
 
-    // Réception du message diffusé par le serveur
     socket.on("message:received", (message: Message) => {
       get().addMessage(message);
     });

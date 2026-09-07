@@ -1,7 +1,9 @@
+// src/components/FriendsManager/FriendsManager.tsx
 import React, { useEffect, useState } from "react";
-import { UserPlus, Check, X, UserX, Loader2, Search } from "lucide-react";
+import { UserPlus, Check, X, UserX, Loader2, Search, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { useFriendStore } from "../../stores/friend.store";
+import { useChatStore } from "../../stores/chat.store";
 import { userService } from "../../services/user.service";
 import type { User } from "../../types/user.types";
 import "./FriendsManager.css";
@@ -17,6 +19,7 @@ export const FriendsManager: React.FC = () => {
   const [sendingId, setSendingId] = useState<string | null>(null);
 
   const { friends, pendingRequests, isLoading, fetchAll, sendRequest, respondToRequest, removeFriend } = useFriendStore();
+  const { startDirectConversation } = useChatStore();
 
   useEffect(() => {
     fetchAll();
@@ -86,6 +89,18 @@ export const FriendsManager: React.FC = () => {
       toast.success("Ami retiré de la liste");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Erreur lors de la suppression");
+    }
+  };
+
+  /**
+   * Starts a direct 1-to-1 conversation with a friend.
+   */
+  const handleStartChat = async (targetUserId: string) => {
+    try {
+      await startDirectConversation(targetUserId);
+      toast.success("Conversation ouverte");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erreur lors de l'ouverture de la conversation");
     }
   };
 
@@ -171,7 +186,7 @@ export const FriendsManager: React.FC = () => {
           <ul className="friends-manager__list">
             {friends.map((item) => {
               const displayUser = item.friend || item.user;
-              const displayId = item.friendId;
+              const displayId = displayUser?.id || item.friendId;
 
               return (
                 <li key={item.id} className="friends-manager__item">
@@ -179,13 +194,22 @@ export const FriendsManager: React.FC = () => {
                     <div className="friends-manager__avatar">{(displayUser?.username?.[0] || "U").toUpperCase()}</div>
                     <span className="friends-manager__username">{displayUser?.username || displayId}</span>
                   </div>
-                  <button
-                    onClick={() => handleRemove(displayId)}
-                    className="friends-manager__btn friends-manager__btn--ghost"
-                    title="Supprimer l'ami"
-                  >
-                    <UserX size={16} />
-                  </button>
+                  <div className="friends-manager__actions">
+                    <button
+                      onClick={() => handleStartChat(displayId)}
+                      className="friends-manager__btn friends-manager__btn--primary"
+                      title="Démarrer une discussion"
+                    >
+                      <MessageSquare size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleRemove(displayId)}
+                      className="friends-manager__btn friends-manager__btn--ghost"
+                      title="Supprimer l'ami"
+                    >
+                      <UserX size={16} />
+                    </button>
+                  </div>
                 </li>
               );
             })}

@@ -33,4 +33,16 @@ export const conversationService = {
     const response = await api.get<Message[]>(`/conversations/${conversationId}/messages`);
     return response.data;
   },
+
+  /**
+   * Creates or fetches a direct 1-to-1 conversation with a target user.
+   * @async
+   * @function getOrCreateDirectConversation
+   * @param {string} targetUserId - The target conversation identifier
+   * @returns {Promise<Conversation>} Array of chronological messages
+   */
+  async getOrCreateDirectConversation(targetUserId: string): Promise<Conversation> {
+    const response = await api.post<Conversation>("/conversations/direct", { targetUserId });
+    return response.data;
+  },
 };

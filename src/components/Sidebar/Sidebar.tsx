@@ -82,7 +82,14 @@ export function Sidebar({ isCollapsed: externalIsCollapsed, onToggleCollapse }: 
             {!isCollapsed && <span>Discussions</span>}
           </NavLink>
 
-          <NavLink to="/dashboard/friends" className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`} onClick={closeMobile}>
+          <NavLink
+            to="/dashboard/friends"
+            className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}
+            onClick={() => {
+              useChatStore.setState({ activeConversationId: null });
+              closeMobile();
+            }}
+          >
             <span className="link-icon">
               <Users size={20} />
             </span>

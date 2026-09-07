@@ -186,3 +186,23 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+.chat-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+.chat-back-btn:hover {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
