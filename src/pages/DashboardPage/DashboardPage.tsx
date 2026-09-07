@@ -2,10 +2,11 @@ import React, { useEffect } from "react";
 import { useChatStore } from "../../stores/chat.store";
 import { socketService } from "../../services/socket.service";
 import { ChatArea } from "../../components/ChatArea/ChatArea";
+import { FriendsManager } from "../../components/FriendsManager/FriendsManager";
 import "./DashboardPage.css";
 
 export const DashboardPage: React.FC = () => {
-  const { fetchConversations, initSocketListeners, cleanupSocketListeners } = useChatStore();
+  const { activeConversationId, fetchConversations, initSocketListeners, cleanupSocketListeners } = useChatStore();
 
   useEffect(() => {
     socketService.connect();
@@ -19,7 +20,8 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <div className="chat-main-container">
-      <ChatArea />
+      {/* Affichage conditionnel : la liste d'amis s'affiche si aucune conversation n'est sélectionnée */}
+      {activeConversationId ? <ChatArea /> : <FriendsManager />}
     </div>
   );
 };

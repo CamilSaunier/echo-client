@@ -1,7 +1,7 @@
 // src/components/Sidebar/Sidebar.tsx
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Zap, Menu, X, ChevronLeft, ChevronRight, LayoutDashboard, MessageSquare, Settings, LogOut, Hash } from "lucide-react";
+import { Zap, Menu, X, ChevronLeft, ChevronRight, LayoutDashboard, MessageSquare, Settings, LogOut, Hash, Users } from "lucide-react";
 import { useAuthStore } from "../../stores/auth.stores";
 import { useChatStore } from "../../stores/chat.store";
 import { ThemeToggle } from "../ThemeToggle/ThemeToggle";
@@ -80,6 +80,13 @@ export function Sidebar({ isCollapsed: externalIsCollapsed, onToggleCollapse }: 
               <MessageSquare size={20} />
             </span>
             {!isCollapsed && <span>Discussions</span>}
+          </NavLink>
+
+          <NavLink to="/dashboard/friends" className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`} onClick={closeMobile}>
+            <span className="link-icon">
+              <Users size={20} />
+            </span>
+            {!isCollapsed && <span>Amis</span>}
           </NavLink>
 
           {/* Section sous-liste des conversations */}

@@ -1,0 +1,219 @@
+.friends-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 1rem;
+  font-family: var(--font-body);
+}
+
+.friends-manager__loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 3rem;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.friends-manager__section {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-card);
+}
+
+.friends-manager__title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+/* --- RECHERCHE DYNAMIQUE D'AMIS --- */
+.friends-manager__search-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.friends-manager__input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.friends-manager__search-icon {
+  position: absolute;
+  left: 0.875rem;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.friends-manager__input-wrapper .friends-manager__input {
+  width: 100%;
+  padding-left: 2.5rem;
+  padding-right: 2.5rem;
+}
+
+.friends-manager__input-wrapper .animate-spin {
+  position: absolute;
+  right: 0.875rem;
+  color: var(--text-muted);
+}
+
+.friends-manager__input {
+  padding: 0.625rem 0.875rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-family: var(--font-body);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.friends-manager__input::placeholder {
+  color: var(--text-muted);
+}
+
+.friends-manager__input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: var(--shadow-focus);
+}
+
+/* Liste des résultats de recherche */
+.friends-manager__results {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+/* --- LISTES ET ÉLÉMENTS (AMIS & DEMANDES) --- */
+.friends-manager__list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.friends-manager__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+}
+
+.friends-manager__user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.friends-manager__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--accent-soft);
+  color: var(--accent-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  font-family: var(--font-display);
+}
+
+.friends-manager__username {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.friends-manager__actions {
+  display: flex;
+  gap: 0.375rem;
+}
+
+/* --- BOUTONS --- */
+.friends-manager__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+}
+
+.friends-manager__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.friends-manager__btn--primary {
+  background-color: var(--accent-color);
+  color: #ffffff;
+}
+
+.friends-manager__btn--primary:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+}
+
+.friends-manager__btn--success {
+  background-color: var(--accent-soft);
+  color: var(--accent-color);
+  border-color: var(--border-color);
+}
+
+.friends-manager__btn--success:hover {
+  background-color: var(--accent-color);
+  color: #ffffff;
+}
+
+.friends-manager__btn--danger {
+  background-color: transparent;
+  color: var(--danger-color);
+  border-color: var(--border-color);
+}
+
+.friends-manager__btn--danger:hover {
+  background-color: var(--danger-color);
+  color: #ffffff;
+}
+
+.friends-manager__btn--ghost {
+  background-color: transparent;
+  color: var(--text-secondary);
+}
+
+.friends-manager__btn--ghost:hover {
+  color: var(--danger-color);
+}
+
+.friends-manager__empty {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
