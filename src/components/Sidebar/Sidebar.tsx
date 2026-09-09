@@ -1,7 +1,7 @@
 // src/components/Sidebar/Sidebar.tsx
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Zap, Menu, X, ChevronLeft, ChevronRight, LayoutDashboard, MessageSquare, Settings, LogOut, Hash, Users } from "lucide-react";
+import { Zap, Menu, X, ChevronLeft, ChevronRight, Settings, LogOut, Hash, Users, User } from "lucide-react";
 import { useAuthStore } from "../../stores/auth.stores";
 import { useChatStore } from "../../stores/chat.store";
 import { ThemeToggle } from "../ThemeToggle/ThemeToggle";
@@ -68,20 +68,6 @@ export function Sidebar({ isCollapsed: externalIsCollapsed, onToggleCollapse }: 
 
         {/* Navigation principale */}
         <nav className="sidebar-nav">
-          <NavLink to="/dashboard" end className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`} onClick={closeMobile}>
-            <span className="link-icon">
-              <LayoutDashboard size={20} />
-            </span>
-            {!isCollapsed && <span>Dashboard</span>}
-          </NavLink>
-
-          <NavLink to="/dashboard/chat" className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`} onClick={closeMobile}>
-            <span className="link-icon">
-              <MessageSquare size={20} />
-            </span>
-            {!isCollapsed && <span>Discussions</span>}
-          </NavLink>
-
           <NavLink
             to="/dashboard/friends"
             className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}
@@ -136,6 +122,20 @@ export function Sidebar({ isCollapsed: externalIsCollapsed, onToggleCollapse }: 
 
         {/* Pied de page */}
         <div className="sidebar-footer">
+          {/* Profil utilisateur */}
+          {user && (
+            <div className={`sidebar-user-info ${isCollapsed ? "collapsed" : ""}`} title={user.username}>
+              <div className="user-avatar">
+                <User size={18} />
+              </div>
+              {!isCollapsed && (
+                <div className="user-details">
+                  <span className="user-username">{user.username}</span>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className={`sidebar-theme-wrapper ${isCollapsed ? "collapsed" : ""}`}>
             <ThemeToggle isCollapsed={isCollapsed} />
           </div>

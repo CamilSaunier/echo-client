@@ -1,39 +1,34 @@
 .dashboard-app-layout {
   display: flex;
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background-color: var(--bg-primary);
 }
 
 .dashboard-app-content {
   flex: 1;
-  height: 100vh;
-  margin-left: 260px;
-  overflow: hidden;
+  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  overflow: hidden;
+  margin-left: 260px;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@media (max-width: 768px) {
-  .dashboard-app-layout {
-    height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+/* Réduit la marge quand la sidebar porte la classe .collapsed */
+.dashboard-app-layout:has(.app-sidebar.collapsed) .dashboard-app-content {
+  margin-left: 70px; /* Ajuste à 78px si c'est la largeur exacte de ta sidebar repliée */
+}
 
+@media (max-width: 768px) {
   .dashboard-app-content {
     margin-left: 0;
-    padding-top: 60px; /* Hauteur de la topbar mobile */
-    flex: 1;
-    height: 100%;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    box-sizing: border-box; /* Indispensable pour inclure le padding dans la hauteur */
+    padding-top: 60px;
+  }
+
+  .dashboard-app-layout:has(.app-sidebar.collapsed) .dashboard-app-content {
+    margin-left: 0;
   }
 }
