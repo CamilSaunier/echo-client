@@ -19,6 +19,7 @@ interface ChatState {
   fetchConversations: () => Promise<void>;
   selectConversation: (conversationId: string) => Promise<void>;
   startDirectConversation: (targetUserId: string) => Promise<void>;
+  leaveConversation: (conversationId: string) => Promise<void>;
   sendMessage: (content: string) => Promise<void>;
   addMessage: (message: Message) => void;
   initSocketListeners: () => void;
@@ -103,6 +104,38 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   /**
+   * Leaves a specified conversation thread and resets local state if active.
+   *
+   * @param conversationId - The unique identifier of the target conversation
+   */
+  leaveConversation: async (conversationId: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      await conversationService.leaveConversation(conversationId);
+
+      const socket = socketService.socket;
+      if (socket?.connected) {
+        socket.emit("conversation:leave", { conversationId });
+      }
+
+      const { conversations, activeConversationId, messages } = get();
+      const isCurrentActive = activeConversationId === conversationId;
+
+      set({
+        conversations: conversations.filter((c) => c.id !== conversationId),
+        activeConversationId: isCurrentActive ? null : activeConversationId,
+        messages: isCurrentActive ? [] : messages,
+        isLoading: false,
+      });
+    } catch (err: any) {
+      set({
+        error: err.response?.data?.message || "Erreur lors de la sortie de la conversation.",
+        isLoading: false,
+      });
+    }
+  },
+
+  /**
    * Sends a message to the active conversation via WebSocket or falls back to REST API.
    *
    * @param content - The plain text message content
@@ -138,6 +171,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
       if (!exists) {
         set({ messages: [...messages, newMessage] });
       }
+    }
+
+    const conversationExists = conversations.some((c) => c.id === newMessage.conversationId);
+
+    if (!conversationExists) {
+      // Si la conversation a été masquée/quittée mais qu'un message arrive,
+      // on recharge toute la liste des conversations pour la faire réapparaître instantanément !
+      get().fetchConversations();
+      return;
     }
 
     const updatedConversations = conversations.map((conv) => {

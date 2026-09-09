@@ -336,6 +336,59 @@
   overflow: hidden;
 }
 
+/* --- SOUS-LIENS DE CONVERSATION AVEC ACTION LEAVE --- */
+.sidebar-sublink-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-sublink-wrapper:hover {
+  background-color: var(--bg-hover, rgba(255, 255, 255, 0.05));
+}
+
+.sidebar-sublink-wrapper.active {
+  background-color: var(--bg-active, rgba(255, 255, 255, 0.1));
+}
+
+.sidebar-sublink {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  padding: 6px 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+}
+
+.sidebar-sublink-wrapper.active .sidebar-sublink {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.sidebar-sublink .sublink-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-leave-btn {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  padding: 4px;
+}
+
+.sidebar-sublink-wrapper:hover .sidebar-leave-btn {
+  opacity: 1;
+}
+
 /* RESPONSIVE TABLETTE & MOBILE (<= 768px) */
 @media (max-width: 768px) {
   .mobile-menu-btn {

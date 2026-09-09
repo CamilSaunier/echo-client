@@ -45,4 +45,16 @@ export const conversationService = {
     const response = await api.post<Conversation>("/conversations/direct", { targetUserId });
     return response.data;
   },
+
+  /**
+   * Leaves a specific conversation for the authenticated user.
+   *
+   * @async
+   * @function leaveConversation
+   * @param {string} conversationId - The identifier of the conversation to leave
+   * @returns {Promise<void>}
+   */
+  async leaveConversation(conversationId: string): Promise<void> {
+    await api.delete(`/conversations/${conversationId}/leave`);
+  },
 };

@@ -1,0 +1,44 @@
+/* src/components/LeaveConversationButton/LeaveConversationButton.css */
+.leave-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted, #8e8e93);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+}
+
+.leave-btn:hover {
+  color: #ff453a;
+  background-color: rgba(255, 69, 58, 0.1);
+}
+
+.leave-confirm-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.leave-btn.confirm {
+  background-color: #ff453a;
+  color: #ffffff;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.leave-btn.confirm:hover {
+  background-color: #d73a31;
+}
+
+.leave-btn.cancel {
+  background-color: var(--bg-tertiary, #2c2c2e);
+  color: var(--text-primary, #ffffff);
+  padding: 2px 8px;
+  font-size: 11px;
+}

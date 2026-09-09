@@ -5,6 +5,7 @@ import { Zap, Menu, X, ChevronLeft, ChevronRight, Settings, LogOut, Hash, Users,
 import { useAuthStore } from "../../stores/auth.stores";
 import { useChatStore } from "../../stores/chat.store";
 import { ThemeToggle } from "../ThemeToggle/ThemeToggle";
+import { LeaveConversationButton } from "../LeaveConversationButton/LeaveConversationButton";
 import "./Sidebar.css";
 
 export interface SidebarProps {
@@ -92,20 +93,23 @@ export function Sidebar({ isCollapsed: externalIsCollapsed, onToggleCollapse }: 
                   const displayName = conv.name || otherParticipant?.user.username || "Discussion";
 
                   return (
-                    <button
-                      key={conv.id}
-                      type="button"
-                      className={`sidebar-sublink ${activeConversationId === conv.id ? "active" : ""}`}
-                      onClick={() => {
-                        selectConversation(conv.id);
-                        closeMobile();
-                      }}
-                    >
-                      <span className="sublink-icon">
-                        <Hash size={16} />
-                      </span>
-                      <span className="sublink-text">{displayName}</span>
-                    </button>
+                    <div key={conv.id} className={`sidebar-sublink-wrapper ${activeConversationId === conv.id ? "active" : ""}`}>
+                      <button
+                        type="button"
+                        className="sidebar-sublink"
+                        onClick={() => {
+                          selectConversation(conv.id);
+                          closeMobile();
+                        }}
+                      >
+                        <span className="sublink-icon">
+                          <Hash size={16} />
+                        </span>
+                        <span className="sublink-text">{displayName}</span>
+                      </button>
+
+                      <LeaveConversationButton conversationId={conv.id} className="sidebar-leave-btn" />
+                    </div>
                   );
                 })}
               </div>
