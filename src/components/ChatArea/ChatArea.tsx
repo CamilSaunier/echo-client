@@ -11,13 +11,36 @@ export const ChatArea: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const currentUser = useAuthStore((state) => state.user);
-  const { activeConversationId, conversations, messages, sendMessage, isLoading } = useChatStore();
+  const { activeConversationId, conversations, messages, sendMessage, isLoading, typingUsers, sendTypingStatus } = useChatStore();
 
   const activeConversation = conversations.find((c) => c.id === activeConversationId);
 
   const otherParticipant = activeConversation?.participants?.find((p) => p.userId !== currentUser?.id);
 
   const chatTitle = activeConversation?.name || otherParticipant?.user?.username || "Discussion";
+
+  // Gestion du statut de frappe avec debounce
+  useEffect(() => {
+    if (!activeConversationId) return;
+
+    let timeout: ReturnType<typeof setTimeout>;
+    if (content.trim()) {
+      sendTypingStatus(activeConversationId, true);
+
+      // Stoppe automatiquement le signal si l'utilisateur s'arrête d'écrire pendant 2 secondes
+      timeout = setTimeout(() => {
+        sendTypingStatus(activeConversationId, false);
+      }, 2000);
+    } else {
+      sendTypingStatus(activeConversationId, false);
+    }
+
+    return () => clearTimeout(timeout);
+  }, [content, activeConversationId, sendTypingStatus]);
+
+  // Récupère l'état de frappe de l'autre participant
+  const otherUserId = otherParticipant?.userId;
+  const isOtherUserTyping = otherUserId ? typingUsers[otherUserId] : false;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -33,6 +56,12 @@ export const ChatArea: React.FC = () => {
 
     const messageText = content;
     setContent("");
+
+    // Stoppe immédiatement l'indicateur de frappe à l'envoi
+    if (activeConversationId) {
+      sendTypingStatus(activeConversationId, false);
+    }
+
     await sendMessage(messageText);
   };
 
@@ -96,6 +125,16 @@ export const ChatArea: React.FC = () => {
         )}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Indicateur de frappe */}
+      {isOtherUserTyping && (
+        <div
+          className="typing-indicator"
+          style={{ padding: "0.25rem 1rem", fontSize: "0.85rem", color: "var(--text-secondary, #888)", fontStyle: "italic" }}
+        >
+          {chatTitle} est en train d'écrire...
+        </div>
+      )}
 
       {/* Formulaire de saisie */}
       <form className="chat-input-container" onSubmit={handleSend}>

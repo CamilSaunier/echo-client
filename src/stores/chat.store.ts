@@ -15,6 +15,7 @@ interface ChatState {
   messages: Message[];
   isLoading: boolean;
   error: string | null;
+  typingUsers: Record<string, boolean>; // Stocke l'état de frappe par userId (ex: { [userId]: true })
 
   fetchConversations: () => Promise<void>;
   selectConversation: (conversationId: string) => Promise<void>;
@@ -22,6 +23,11 @@ interface ChatState {
   leaveConversation: (conversationId: string) => Promise<void>;
   sendMessage: (content: string) => Promise<void>;
   addMessage: (message: Message) => void;
+
+  // Actions pour l'indicateur de frappe
+  setTyping: (userId: string, isTyping: boolean) => void;
+  sendTypingStatus: (conversationId: string, isTyping: boolean) => void;
+
   initSocketListeners: () => void;
   cleanupSocketListeners: () => void;
 }
@@ -35,6 +41,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
   isLoading: false,
   error: null,
+  typingUsers: {},
 
   /**
    * Fetches all conversations of the logged-in user from the REST API.
@@ -58,7 +65,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
    * @param conversationId - The unique identifier of the target conversation
    */
   selectConversation: async (conversationId: string) => {
-    set({ activeConversationId: conversationId, isLoading: true, error: null });
+    set({ activeConversationId: conversationId, isLoading: true, error: null, typingUsers: {} });
     try {
       const messages = await conversationService.getConversationMessages(conversationId);
       set({ messages, isLoading: false });
@@ -147,6 +154,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       const socket = socketService.socket;
 
+      // Arrêt immédiat de l'indicateur de frappe lors de l'envoi
+      get().sendTypingStatus(activeConversationId, false);
+
       if (socket?.connected) {
         socket.emit("message:send", { content, conversationId: activeConversationId });
       } else {
@@ -176,8 +186,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const conversationExists = conversations.some((c) => c.id === newMessage.conversationId);
 
     if (!conversationExists) {
-      // Si la conversation a été masquée/quittée mais qu'un message arrive,
-      // on recharge toute la liste des conversations pour la faire réapparaître instantanément !
       get().fetchConversations();
       return;
     }
@@ -196,16 +204,43 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   /**
-   * Registers real-time WebSocket event listeners for incoming message broadcasting.
+   * Met à jour l'état de frappe d'un utilisateur spécifique.
+   */
+  setTyping: (userId: string, isTyping: boolean) => {
+    set((state) => ({
+      typingUsers: {
+        ...state.typingUsers,
+        [userId]: isTyping,
+      },
+    }));
+  },
+
+  /**
+   * Émet l'événement de frappe au serveur WebSocket.
+   */
+  sendTypingStatus: (conversationId: string, isTyping: boolean) => {
+    const socket = socketService.socket;
+    if (socket?.connected) {
+      socket.emit("typing", { conversationId, isTyping });
+    }
+  },
+
+  /**
+   * Registers real-time WebSocket event listeners for incoming message broadcasting and typing status.
    */
   initSocketListeners: () => {
     const socket = socketService.socket;
     if (!socket) return;
 
     socket.off("message:received");
+    socket.off("user:typing");
 
     socket.on("message:received", (message: Message) => {
       get().addMessage(message);
+    });
+
+    socket.on("user:typing", ({ userId, isTyping }: { userId: string; isTyping: boolean }) => {
+      get().setTyping(userId, isTyping);
     });
   },
 
@@ -216,6 +251,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const socket = socketService.socket;
     if (socket) {
       socket.off("message:received");
+      socket.off("user:typing");
     }
   },
 }));
