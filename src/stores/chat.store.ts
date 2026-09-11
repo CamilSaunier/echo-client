@@ -15,7 +15,8 @@ interface ChatState {
   messages: Message[];
   isLoading: boolean;
   error: string | null;
-  typingUsers: Record<string, boolean>; // Stocke l'état de frappe par userId (ex: { [userId]: true })
+  typingUsers: Record<string, boolean>; // Stocke l'état de frappe par userId
+  onlineUserIds: string[]; // Stocke les IDs des utilisateurs en ligne
 
   fetchConversations: () => Promise<void>;
   selectConversation: (conversationId: string) => Promise<void>;
@@ -27,6 +28,10 @@ interface ChatState {
   // Actions pour l'indicateur de frappe
   setTyping: (userId: string, isTyping: boolean) => void;
   sendTypingStatus: (conversationId: string, isTyping: boolean) => void;
+
+  // Actions pour le statut en ligne
+  setOnlineUsers: (userIds: string[]) => void;
+  updateUserStatus: (userId: string, isOnline: boolean) => void;
 
   initSocketListeners: () => void;
   cleanupSocketListeners: () => void;
@@ -42,6 +47,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isLoading: false,
   error: null,
   typingUsers: {},
+  onlineUserIds: [],
 
   /**
    * Fetches all conversations of the logged-in user from the REST API.
@@ -226,14 +232,40 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   /**
-   * Registers real-time WebSocket event listeners for incoming message broadcasting and typing status.
+   * Définit la liste complète des utilisateurs en ligne à la connexion.
+   */
+  setOnlineUsers: (userIds: string[]) => {
+    set({ onlineUserIds: userIds });
+  },
+
+  /**
+   * Met à jour le statut en ligne/hors ligne d'un utilisateur en temps réel.
+   */
+  updateUserStatus: (userId: string, isOnline: boolean) => {
+    set((state) => {
+      const isCurrentlyOnline = state.onlineUserIds.includes(userId);
+      if (isOnline && !isCurrentlyOnline) {
+        return { onlineUserIds: [...state.onlineUserIds, userId] };
+      }
+      if (!isOnline && isCurrentlyOnline) {
+        return { onlineUserIds: state.onlineUserIds.filter((id) => id !== userId) };
+      }
+      return state;
+    });
+  },
+
+  /**
+   * Registers real-time WebSocket event listeners for incoming messages, typing, and presence.
    */
   initSocketListeners: () => {
     const socket = socketService.socket;
     if (!socket) return;
 
+    // Nettoyage préventif pour éviter les doublons d'écouteurs
     socket.off("message:received");
     socket.off("user:typing");
+    socket.off("users:online:list");
+    socket.off("user:status");
 
     socket.on("message:received", (message: Message) => {
       get().addMessage(message);
@@ -241,6 +273,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     socket.on("user:typing", ({ userId, isTyping }: { userId: string; isTyping: boolean }) => {
       get().setTyping(userId, isTyping);
+    });
+
+    // Écouteurs de présence ajoutés ici 👇
+    socket.on("users:online:list", (userIds: string[]) => {
+      get().setOnlineUsers(userIds);
+    });
+
+    socket.on("user:status", ({ userId, isOnline }: { userId: string; isOnline: boolean }) => {
+      get().updateUserStatus(userId, isOnline);
     });
   },
 
@@ -252,6 +293,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
     if (socket) {
       socket.off("message:received");
       socket.off("user:typing");
+      socket.off("users:online:list");
+      socket.off("user:status");
     }
   },
 }));

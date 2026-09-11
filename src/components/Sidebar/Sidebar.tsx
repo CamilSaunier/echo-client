@@ -1,7 +1,7 @@
 // src/components/Sidebar/Sidebar.tsx
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Zap, Menu, X, ChevronLeft, ChevronRight, Settings, LogOut, Hash, Users, User } from "lucide-react";
+import { Zap, Menu, X, ChevronLeft, ChevronRight, Settings, LogOut, Hash, Users, User, ChevronDown, ChevronUp } from "lucide-react";
 import { useAuthStore } from "../../stores/auth.stores";
 import { useChatStore } from "../../stores/chat.store";
 import { ThemeToggle } from "../ThemeToggle/ThemeToggle";
@@ -17,12 +17,15 @@ export function Sidebar({ isCollapsed: externalIsCollapsed, onToggleCollapse }: 
   const [internalIsCollapsed, setInternalIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
+  // État pour ouvrir/fermer le menu déroulant des amis
+  const [isFriendsOpen, setIsFriendsOpen] = useState(true);
+
   const isCollapsed = externalIsCollapsed ?? internalIsCollapsed;
 
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
 
-  const { conversations, activeConversationId, selectConversation } = useChatStore();
+  const { conversations, activeConversationId, selectConversation, onlineUserIds, startDirectConversation } = useChatStore();
 
   const toggleCollapse = () => {
     if (onToggleCollapse) {
@@ -34,6 +37,22 @@ export function Sidebar({ isCollapsed: externalIsCollapsed, onToggleCollapse }: 
 
   const toggleMobile = () => setIsMobileOpen(!isMobileOpen);
   const closeMobile = () => setIsMobileOpen(false);
+
+  // Extraction unique de tous les contacts/amis rencontrés dans les conversations
+  const allFriendsMap = new Map();
+  conversations.forEach((conv) => {
+    const otherParticipant = conv.participants.find((p) => p.userId !== user?.id);
+    if (otherParticipant && otherParticipant.user) {
+      allFriendsMap.set(otherParticipant.userId, {
+        userId: otherParticipant.userId,
+        username: otherParticipant.user.username,
+      });
+    }
+  });
+  const friendsList = Array.from(allFriendsMap.values());
+
+  const onlineFriends = friendsList.filter((f) => onlineUserIds.includes(f.userId));
+  const offlineFriends = friendsList.filter((f) => !onlineUserIds.includes(f.userId));
 
   return (
     <>
@@ -69,28 +88,80 @@ export function Sidebar({ isCollapsed: externalIsCollapsed, onToggleCollapse }: 
 
         {/* Navigation principale */}
         <nav className="sidebar-nav">
-          <NavLink
-            to="/dashboard/friends"
-            className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}
-            onClick={() => {
-              useChatStore.setState({ activeConversationId: null });
-              closeMobile();
-            }}
-          >
-            <span className="link-icon">
-              <Users size={20} />
-            </span>
-            {!isCollapsed && <span>Amis</span>}
-          </NavLink>
+          {/* Section Menu Déroulant des Amis */}
+          {!isCollapsed && (
+            <div className="sidebar-friends-dropdown-section">
+              <button type="button" className="sidebar-dropdown-header" onClick={() => setIsFriendsOpen(!isFriendsOpen)}>
+                <div className="dropdown-title-wrapper">
+                  <Users size={18} />
+                  <span>Amis ({friendsList.length})</span>
+                </div>
+                {isFriendsOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
 
-          {/* Section sous-liste des conversations */}
+              {isFriendsOpen && (
+                <div className="sidebar-friends-list">
+                  {friendsList.length === 0 ? (
+                    <p className="sidebar-empty-text">Aucun ami pour le moment</p>
+                  ) : (
+                    <>
+                      {/* En ligne */}
+                      {onlineFriends.length > 0 && (
+                        <div className="friend-category">
+                          <span className="friend-category-title">En ligne — {onlineFriends.length}</span>
+                          {onlineFriends.map((friend) => (
+                            <button
+                              key={friend.userId}
+                              type="button"
+                              className="friend-item-btn"
+                              onClick={() => {
+                                startDirectConversation(friend.userId);
+                                closeMobile();
+                              }}
+                            >
+                              <span className="friend-status-dot online" />
+                              <span className="friend-name">{friend.username}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Hors ligne */}
+                      {offlineFriends.length > 0 && (
+                        <div className="friend-category">
+                          <span className="friend-category-title">Hors ligne — {offlineFriends.length}</span>
+                          {offlineFriends.map((friend) => (
+                            <button
+                              key={friend.userId}
+                              type="button"
+                              className="friend-item-btn offline"
+                              onClick={() => {
+                                startDirectConversation(friend.userId);
+                                closeMobile();
+                              }}
+                            >
+                              <span className="friend-status-dot offline" />
+                              <span className="friend-name">{friend.username}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Section des canaux de discussion */}
           {!isCollapsed && conversations.length > 0 && (
             <div className="sidebar-conversations-section">
-              <span className="sidebar-section-title">Mes canaux</span>
+              <span className="sidebar-section-title">Canaux actifs</span>
               <div className="sidebar-conversations-list">
                 {conversations.map((conv) => {
                   const otherParticipant = conv.participants.find((p) => p.userId !== user?.id);
                   const displayName = conv.name || otherParticipant?.user.username || "Discussion";
+                  const isOnline = otherParticipant ? onlineUserIds.includes(otherParticipant.userId) : false;
 
                   return (
                     <div key={conv.id} className={`sidebar-sublink-wrapper ${activeConversationId === conv.id ? "active" : ""}`}>
@@ -102,8 +173,9 @@ export function Sidebar({ isCollapsed: externalIsCollapsed, onToggleCollapse }: 
                           closeMobile();
                         }}
                       >
-                        <span className="sublink-icon">
+                        <span className="sublink-icon-wrapper">
                           <Hash size={16} />
+                          <span className={`sidebar-status-dot ${isOnline ? "online" : "offline"}`} />
                         </span>
                         <span className="sublink-text">{displayName}</span>
                       </button>
@@ -116,7 +188,7 @@ export function Sidebar({ isCollapsed: externalIsCollapsed, onToggleCollapse }: 
             </div>
           )}
 
-          <NavLink to="/dashboard/settings" className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`} onClick={closeMobile}>
+          <NavLink to="/dashboard/settings" className={({ isActive }): string => `sidebar-link ${isActive ? "active" : ""}`} onClick={closeMobile}>
             <span className="link-icon">
               <Settings size={20} />
             </span>
@@ -126,7 +198,6 @@ export function Sidebar({ isCollapsed: externalIsCollapsed, onToggleCollapse }: 
 
         {/* Pied de page */}
         <div className="sidebar-footer">
-          {/* Profil utilisateur */}
           {user && (
             <div className={`sidebar-user-info ${isCollapsed ? "collapsed" : ""}`} title={user.username}>
               <div className="user-avatar">

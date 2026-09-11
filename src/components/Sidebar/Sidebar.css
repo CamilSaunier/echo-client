@@ -54,7 +54,8 @@
 
 /* Masquage du texte en mode collapsed */
 .app-sidebar.collapsed .sidebar-brand span,
-.app-sidebar.collapsed .sidebar-link span:not(.link-icon) {
+.app-sidebar.collapsed .sidebar-link span:not(.link-icon),
+.app-sidebar.collapsed .sidebar-friends-dropdown-section {
   display: none;
 }
 
@@ -152,6 +153,107 @@
   font-weight: 600;
 }
 
+/* --- SECTION MENU DÉROULANT DES AMIS --- */
+.sidebar-friends-dropdown-section {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-dropdown-header {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.sidebar-dropdown-header:hover {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.dropdown-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sidebar-friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding-left: 0.5rem;
+  margin-top: 0.25rem;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.friend-category {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.friend-category-title {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.5rem;
+  font-weight: 600;
+}
+
+.friend-item-btn {
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: var(--radius-sm);
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.friend-item-btn:hover {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.friend-item-btn.offline {
+  opacity: 0.7;
+}
+
+.friend-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-empty-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 0.25rem 0.5rem;
+  font-style: italic;
+}
+
 /* --- SECTION SOUS-LISTE DES CANAUX --- */
 .sidebar-conversations-section {
   display: flex;
@@ -179,33 +281,38 @@
   margin-left: 1rem;
 }
 
+.sidebar-sublink-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-sublink-wrapper:hover {
+  background-color: var(--bg-secondary);
+}
+
+.sidebar-sublink-wrapper.active {
+  background-color: var(--accent-soft);
+}
+
 .sidebar-sublink {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-  width: 100%;
-  border: none;
+  gap: 8px;
+  flex: 1;
+  padding: 6px 8px;
   background: transparent;
-  padding: 0.45rem 0.625rem;
-  border-radius: var(--radius-sm);
+  border: none;
   color: var(--text-secondary);
-  font-size: 0.85rem;
-  font-family: var(--font-body);
-  font-weight: 500;
+  font-size: 13px;
   cursor: pointer;
   text-align: left;
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
+  overflow: hidden;
 }
 
-.sidebar-sublink:hover {
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
-}
-
-.sidebar-sublink.active {
-  background-color: var(--accent-soft);
+.sidebar-sublink-wrapper.active .sidebar-sublink {
   color: var(--accent-color);
   font-weight: 600;
 }
@@ -219,10 +326,100 @@
   flex-shrink: 0;
 }
 
+.sublink-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .sublink-text {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.sidebar-leave-btn {
+  opacity: 1;
+  padding: 4px;
+  margin-right: 4px;
+}
+
+/* Pastilles de statut (En ligne / Hors ligne) */
+.sidebar-status-dot,
+.friend-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sidebar-status-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  border: 1px solid var(--bg-card);
+}
+
+.sidebar-status-dot.online,
+.friend-status-dot.online {
+  background-color: #22c55e;
+  box-shadow: 0 0 4px rgba(34, 197, 94, 0.5);
+}
+
+.sidebar-status-dot.offline,
+.friend-status-dot.offline {
+  background-color: #94a3b8;
+}
+
+/* --- PROFIL UTILISATEUR EN BAS DE LA SIDEBAR --- */
+.sidebar-user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.sidebar-user-info.collapsed {
+  justify-content: center;
+  padding: 8px 0;
+  border: none;
+  background-color: transparent;
+}
+
+.user-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--accent-soft);
+  color: var(--accent-color);
+  flex-shrink: 0;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.user-username {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 /* Pied de page */
@@ -285,108 +482,6 @@
 .sidebar-overlay.active {
   opacity: 1;
   pointer-events: auto;
-}
-
-/* --- PROFIL UTILISATEUR EN BAS DE LA SIDEBAR --- */
-.sidebar-user-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  margin-bottom: 8px;
-  border-radius: var(--radius-sm);
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  overflow: hidden;
-  transition: all 0.2s ease;
-}
-
-.sidebar-user-info.collapsed {
-  justify-content: center;
-  padding: 8px 0;
-  border: none;
-  background-color: transparent;
-}
-
-.user-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: var(--accent-soft);
-  color: var(--accent-color);
-  flex-shrink: 0;
-}
-
-.user-details {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-width: 0;
-}
-
-.user-username {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-
-/* --- SOUS-LIENS DE CONVERSATION AVEC ACTION LEAVE --- */
-.sidebar-sublink-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-radius: var(--radius-sm);
-  transition: background-color 0.2s ease;
-}
-
-.sidebar-sublink-wrapper:hover {
-  background-color: var(--bg-hover, rgba(255, 255, 255, 0.05));
-}
-
-.sidebar-sublink-wrapper.active {
-  background-color: var(--bg-active, rgba(255, 255, 255, 0.1));
-}
-
-.sidebar-sublink {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  padding: 6px 8px;
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 13px;
-  cursor: pointer;
-  text-align: left;
-  overflow: hidden;
-}
-
-.sidebar-sublink-wrapper.active .sidebar-sublink {
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.sidebar-sublink .sublink-text {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sidebar-leave-btn {
-  opacity: 1; /* Rendu toujours visible */
-  padding: 4px;
-  margin-right: 4px; /* Petit espacement sur le bord droit */
-}
-
-.sidebar-sublink-wrapper:hover .sidebar-leave-btn {
-  opacity: 1;
 }
 
 /* RESPONSIVE TABLETTE & MOBILE (<= 768px) */
