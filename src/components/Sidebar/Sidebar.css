@@ -380,9 +380,9 @@
 }
 
 .sidebar-leave-btn {
-  opacity: 0;
-  transition: opacity 0.2s ease;
+  opacity: 1; /* Rendu toujours visible */
   padding: 4px;
+  margin-right: 4px; /* Petit espacement sur le bord droit */
 }
 
 .sidebar-sublink-wrapper:hover .sidebar-leave-btn {
